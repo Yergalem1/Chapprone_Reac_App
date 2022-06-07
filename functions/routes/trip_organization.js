@@ -8,7 +8,7 @@ const { Parser } = require('json2csv');
 const router = express.Router();
 const json2csvParser = new Parser({ header: true });
 
-router.get('/all_Organization', async function (req, res) {
+router.get('/all_organization', async function (req, res) {
 
     try {
         const db = admin.database();
@@ -36,9 +36,6 @@ router.get('/all_Organization', async function (req, res) {
                 }
             }
         ]).then((response) => {
-
-            const formattedResposen = [];
-
             response.map((item) => {
 
                 const noOfRole = item.user_organization.map(item => item.role).reduce((count, word) => {
@@ -46,7 +43,7 @@ router.get('/all_Organization', async function (req, res) {
                     return count;
                 }, {})
 
-                formattedResposen.push({
+                formattedResponse.push({
                     Organization_Name: item.name,
                     Country: item.country,
                     City: item.city,
@@ -61,7 +58,7 @@ router.get('/all_Organization', async function (req, res) {
                 })
             })
         })
-    const csvData = json2csvParser.parse(formattedResposen);
+    const csvData = json2csvParser.parse(formattedResponse);
     
     fs.writeFile("Organizaation.csv", csvData, function(err) {
         if (err) console.log("Error generating csv", err)
@@ -84,7 +81,7 @@ router.get('/all_Organization', async function (req, res) {
           'Content-Type': 'text/csv'
         }).end(Buffer.concat(csvDataStream));
       } else {
-        res.status(200).send({ results: formattedResposen, resultCount: formattedResposen.length, });
+        res.status(200).send({ results: formattedResponse, resultCount: formattedResponse.length, });
       }
     })
     } catch (err) {

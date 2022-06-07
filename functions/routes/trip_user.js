@@ -42,62 +42,49 @@ router.get('/all_users', async function (req, res) {
                 }
             },
         ]).then((response) => {
-        console.log("here")
-        const formattedResposen = [];
-        console.log(response)
-        response.map((item) => {
-            // console.log(item)
-            formattedResposen.push({
-                FirstName: item.first_name,
-                LastName: item.last_name,
-                Email: item.email,  
-                Role: item.role,
-                Created_at: item.created_at,
-                Organization: item.Organization_Name,
-                Number_Of_Trips: item.no_of_trips
-            })
-        })
-//         const csvData = json2csvParser.parse(formattedResposen);
-//         fs.writeFile("Users_List.csv", csvData, function (error) {
-//             if (error) res.status(500).send({ "error": error })
-//             res.send({ formattedResposen })
-//         });
-//       });
-//     } catch (err) {
-//         console.log(err)
-//     };
-// })
+          console.log("here")
+          const formattedResponse = [];
+          response.map((item) => {
+              // console.log(item)
+              formattedResponse.push({
+                  FirstName: item.first_name,
+                  LastName: item.last_name,
+                  Email: item.email,  
+                  Role: item.role,
+                  Created_at: item.created_at,
+                  Organization: item.Organization_Name,
+                  Number_Of_Trips: item.no_of_trips
+              })
+          })
+          const csvData = json2csvParser.parse(formattedResponse);
+          fs.writeFile("Users_List.csv", csvData, function(err) {
+            if (err) console.log("Error generating csv", err)
+          })
+        
+          const csvDataStream = []
+          // Read file stream as Buffer from the generated csv from fs.writeFile
+          fs.createReadStream("Users_List.csv").on("error", function (error) {
+            //callback that returns an error when there is an error
+            console.log(error);
+          }).on("data", function(row){
+            // Push the data to a constant if there is a row
+            csvDataStream.push(row)
+          }).on("end", function(_) {
+            // if csv is requested via query, returns csv else return the data as json
 
+            if (req.query.csv == "true") {
+              res.writeHead(200, { 
+                'Content-Disposition': `attachment; filename="Users_List.csv"`, 
+                'Content-Type': 'text/csv'
+              }).end(Buffer.concat(csvDataStream));
+            } else {
+              res.status(200).send({ results: formattedResponse, resultCount: formattedResponse.length, });
+            }
+          })
     })
-const csvData = json2csvParser.parse(formattedResposen);
-
-fs.writeFile("Users_List.csv", csvData, function(err) {
-    if (err) console.log("Error generating csv", err)
-})
-
-const csvDataStream = []
-// Read file stream as Buffer from the generated csv from fs.writeFile
-fs.createReadStream("Users_List.csv").on("error", function (error) {
-  //callback that returns an error when there is an error
-  console.log(error);
-}).on("data", function(row){
-  // Push the data to a constant if there is a row
-  csvDataStream.push(row)
-}).on("end", function(_) {
-  // if csv is requested via query, returns csv else return the data as json
-
-  if (req.query.csv == "true") {
-    res.writeHead(200, { 
-      'Content-Disposition': `attachment; filename="Users_List.csv"`, 
-      'Content-Type': 'text/csv'
-    }).end(Buffer.concat(csvDataStream));
-  } else {
-    res.status(200).send({ results: formattedResposen, resultCount: formattedResposen.length, });
+  } catch (err) {
+    res.status(500).send({ message: 'Something went wrong ' + err.message });
   }
-})
-} catch (err) {
-res.status(500).send({ message: 'Something went wrong ' + err.message });
-}
 })
 
 module.exports=router;
